@@ -1,5 +1,8 @@
 import java.io.IOException;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -17,7 +20,7 @@ public class WordCount {
 
 	// Create an IntWritable (basically an integer) with the value 1
 	private final static IntWritable one = new IntWritable(1);
-
+	// Empty word
         private Text word = new Text();
 
 	// Called once for each key-value pair in the input split
@@ -29,11 +32,27 @@ public class WordCount {
 		// 	the regex library
             StringTokenizer itr = new StringTokenizer(value.toString());
             while (itr.hasMoreTokens()) {
+		// Write the token to the word
                 word.set(itr.nextToken());
                 context.write(word, one);
             }
         }
     }
+
+/*
+	//	Key: Hashtag
+	//	Value: List of tweets with that hashtag
+	public static class TweetMapper extends Mapper<Object, Text, Text, IntWrtiable> {
+		
+		//	Create a Text variable with nothing
+		private Text word = new Text();
+
+		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+
+		}
+	}
+
+*/
 
     public static class IntSumReducer extends Reducer<Text,IntWritable,Text,IntWritable> {
         private IntWritable result = new IntWritable();
