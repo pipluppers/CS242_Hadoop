@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.*
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -40,15 +41,20 @@ public class WordCount {
     }
 
 /*
-	//	Key: Hashtag
-	//	Value: List of tweets with that hashtag
-	public static class TweetMapper extends Mapper<Object, Text, Text, IntWrtiable> {
+	//	Input Key:	Object KEY
+	//	Input Value: 	Text JSON
+	//	Output Key: 	Text Hashtag
+	//	Output Value: 	Text Tweet
+	public static class TweetMapper extends Mapper<Object, Text, Text, Text> {
 		
 		//	Create a Text variable with nothing
 		private Text word = new Text();
 
+		// Value will be the tweet JSON
 		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-
+			// Extract the hashtag from value
+			// Extract the tweet text from value
+			// context.write(hashtag, tweet);
 		}
 	}
 
@@ -74,6 +80,33 @@ public class WordCount {
             context.write(key, result);
         }
     }
+
+/*
+	// Input key:	Text Hashtag
+	// Input value:	Text Tweet
+	// Output key:	Text Hashtag
+	// Ouput value:	Iterable<Text> Tweets
+	public static class TweetReducer extends Reducer<Text, Text, Text, Iterable<Text>> {
+		private Iterable<Text> res = new Iterable<Text>();
+
+		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+			List<String> tweetList = new ArrayList<String>();
+			int x = 0;
+			for (Text val : values) {
+				tweetList.add(x, val);
+				x = x + 1;
+			}
+			
+			// Add everything in tweetList to res
+			
+			
+			// Emit
+			context.write(key, res);
+		}
+	}
+
+*/
+
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
