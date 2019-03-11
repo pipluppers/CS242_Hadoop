@@ -32,35 +32,16 @@ public class WordCount {
 			// Write all texts to StringArrayWritable object
 			set(t);
 		}
-		
+/*
+		public String
+
+		@Override
+		public String toStrings() {
+			Text [] t = to
+		}
+*/		
 	}
 
-
-    // Mapper< KEYIN, VALUEIN, KEYOUT, VALUEOUT >
-    public static class TokenizerMapper extends Mapper<Object, Text, Text, IntWritable> {
-
-	// Create an IntWritable (basically an integer) with the value 1
-	private final static IntWritable one = new IntWritable(1);
-	// Empty word
-        private Text word = new Text();
-
-	// Called once for each key-value pair in the input split
-        public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-		
-		// StringTokenizer takes in a string (e.g. value.toString)
-		// Each token is a word (space-separated)
-		// Basically, using StringTokenizer and nextToken() works like the split function with strings in 
-		// 	the regex library
-            StringTokenizer itr = new StringTokenizer(value.toString());
-            while (itr.hasMoreTokens()) {
-		// Write the token to the word
-                word.set(itr.nextToken());
-                context.write(word, one);
-            }
-        }
-    }
-
-/*
 	//	Input Key:	Object KEY
 	//	Input Value: 	Text JSON
 	//	Output Key: 	Text Hashtag
@@ -73,35 +54,24 @@ public class WordCount {
 		// Value will be the tweet JSON
 		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 			// Extract the hashtag from value
+			String[] json = value.toString().split("\\s");
+			
+			/* Regex Stuff
+			String hashtag = "[hashtags]";
+			String tweet = "[text]";
+			Pattern h = Pattern.compile(hashtag);
+			Pattern t = Pattern.compile(tweet);
+			*/
+
 			// Extract the tweet text from value
 			// context.write(hashtag, tweet);
+			
+			context.write(new Text(json[0]), new Text(json[1]));
+
 		}
 	}
 
-*/
 
-    public static class IntSumReducer extends Reducer<Text,IntWritable,Text,IntWritable> {
-        private IntWritable result = new IntWritable();
-
-	// Grabs the key and all of the values associated with that key
-        public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-            int sum = 0;
-
-		// Loops through all of the values
-            for (IntWritable val : values) {
-		// Use val.get() to get the value (i.e. integer) of an IntWritable
-                sum += val.get();
-            }
-
-		// Assign the integer sum to the IntWritable result
-            result.set(sum);
-
-		// Emit the key-value pair
-            context.write(key, result);
-        }
-    }
-
-/*
 	// Input key:	Text Hashtag
 	// Input value:	Text Tweet
 	// Output key:	Text Hashtag
@@ -109,34 +79,34 @@ public class WordCount {
 	public static class TweetReducer extends Reducer<Text, Text, Text, StringArrayWritable> {
 
 		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-			Text[] t = new Text[4];
-			int x = 0;
+			List<String> texts = new ArrayList<String>();
+
 			for (Text val : values) {
-				t[x] = val;
-				x = x + 1;
+				texts.add(val.toString());
+			}
+			Text[] t = new Text[texts.size()];
+			for (int i = 0; i < texts.size(); ++i) {
+				t[i] = new Text(texts.get(i));
 			}
 			
 			// Emit
 			context.write(key, new StringArrayWritable(t));
 		}
 	}
-*/
+
 
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "word count");
         job.setJarByClass(WordCount.class);
-        job.setMapperClass(TokenizerMapper.class);
-        job.setCombinerClass(IntSumReducer.class);
-
-        job.setReducerClass(IntSumReducer.class);
-	//job.setReducerClass(TweetReducer.class);
-
+        
+	// New
+	job.setMapperClass(TweetMapper.class);
+	job.setCombinerClass(TweetReducer.class);
+	job.setReducerClass(TweetReducer.class);
         job.setOutputKeyClass(Text.class);
-
-        job.setOutputValueClass(IntWritable.class);
-	//job.setOutputValueClass(StringArrayWritable.class);
+	job.setOutputValueClass(StringArrayWritable.class);
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
