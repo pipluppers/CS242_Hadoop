@@ -17,6 +17,20 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class WordCount {
 
+	public static class StringArrayWritable extends ArrayWritable {
+		public StringArrayWritable() {
+			super(Text.class);
+		}
+		public StringArrayWritable(String[] s) {
+			super(Text.class);
+			Text[] txts = new Text[s.length];
+			for (int i = 0; i < s.length; ++i) {
+				txts[i] = new Text(s[i]);
+			}
+			set(txts);
+		}
+	}
+
 	/*
 	public static class StringArrayWritable extends ArrayWritable {
 		// Constructors
@@ -85,11 +99,11 @@ public class WordCount {
 			Matcher m_text = t.matcher(value.toString());
 			Matcher m_loc = loc.matcher(value.toString());
 			Matcher m_prof = prof.matcher(value.toString());
-
-			hashtag = m_hash.group(1);
-			tweet = m_text.group(1);
-			location = m_loc.group(1);
-			profile_pic = m_prof.group(1);
+			
+			while(m_hash.find()) hashtag = m_hash.group(1);
+			while(m_text.find()) tweet = m_text.group(1);
+			while(m_loc.find()) location = m_loc.group(1);
+			while(m_prof.find()) profile_pic = m_prof.group(1);
 			tweet_info[0] = tweet; tweet_info[1] = location; tweet_info[2] = profile_pic;
 			context.write(new Text(hashtag), new ArrayWritable(tweet_info));	// NEW
 		}
@@ -101,10 +115,11 @@ public class WordCount {
 	// Output key:	Text Hashtag
 	// Ouput value: StringArrayWritable Tweets
 //	public static class TweetReducer extends Reducer<Text, Text, Text, ArrayWritable> {
-	public static class TweetReducer extends Reducer<Text, ArrayWritable, Text, ArrayWritable> {	// NEW
+//	public static class TweetReducer extends Reducer<Text, ArrayWritable, Text, ArrayWritable> {	// NEW
+	public static class TweetReducer extends Reducer<Text, StringArrayWritable, Text, StringArrayWritable> {	// NEW2
 
-//		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-		public void reduce(Text key, Iterable<ArrayWritable> values, Context context) throws IOException, Interrupted Exception{
+		public void reduce(Text key, Iterable<StringArrayWritable> values, Context context) throws IOException, InterruptedException {
+//		public void reduce(Text key, Iterable<ArrayWritable> values, Context context) throws IOException, InterruptedException{
 
 			// NEW part
 			// listoflist[0] is tweet, listoflist[1] is location, listoflist[2] is profilepicurl
@@ -113,29 +128,24 @@ public class WordCount {
 			ArrayList<String> innerStr = new ArrayList<String>(3);
   			*/
 
-			List<String> texts = new ArrayList<String>();
-
+			String[] str = new String[3];
+			String[] res = new String[3];
+			res[0] = ""; res[1] = ""; res[2] = "";
+/*
 			for (Text val : values) {
 				texts.add(val.toString());
 			}
-
-			// NEW TODO
-			// How about just add the incoming values to the text after a square bracket
-			// StringArrayWritable:  [Tweet],[location],[profilepicurl]
-			/*
- 			int i = 0;
-			for (StringArrayWritable tlists : values) {
-			
-				for (Text s: tlists) {
-					innerStr.add(s.toString());
-				}
-				listoflist.add(0, innerStr.get(0));
-				listoflist.add(1, innerStr.get(1));
-				listoflist.add(2, innerStr.get(2));
-				innerStr.clear();
+*/
+//			for (ArrayWritable val : values) {
+			for (StringArrayWritable val:values) {
+				str = val.toStrings();
+				res[0] = res[0] + str[0]; res[1] = res[1] + str[1]; res[2] = res[2] + str[2];
 			}
-			context.write(key, new StringArrayWritable(t));
-			*/
+		
+//			context.write(key, new ArrayWritable(res));
+			context.write(key, new StringArrayWritable(res));
+
+/*
 			String[] placeholder = new String[1];
 			placeholder[0] = "hi";
 			Text[] t = new Text[texts.size()];
@@ -145,6 +155,7 @@ public class WordCount {
 			
 			// Emit
 			context.write(key, new ArrayWritable(placeholder));
+*/
 		}
 	}
 
