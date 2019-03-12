@@ -58,9 +58,6 @@ public class WordCount {
 //	public static class TweetMapper extends Mapper<Object, Text, Text, Text> {
 	public static class TweetMapper extends Mapper<Object, Text, Text, ArrayWritable> {	// NEW
 		
-		//	Create a Text variable with nothing
-		private Text word = new Text();
-
 		// Value will be the tweet JSON
 		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 			// Extract the hashtag from value
@@ -93,15 +90,8 @@ public class WordCount {
 			tweet = m_text.group(1);
 			location = m_loc.group(1);
 			profile_pic = m_prof.group(1);
-			//tweet_info.add(tweet); tweet_info.add(location); tweet_info.add(profile_pic);
 			tweet_info[0] = tweet; tweet_info[1] = location; tweet_info[2] = profile_pic;
 			context.write(new Text(hashtag), new ArrayWritable(tweet_info));	// NEW
-
-			//context.write(new Text(m_hash.group(1)), new Text(m_text.group(1)));
-			
-			
-			//context.write(new Text(json[0]), new Text(json[1]));
-
 		}
 	}
 
@@ -110,11 +100,11 @@ public class WordCount {
 	// Input value:	Text Tweet		OR StringArrayWritable TweetInfo (NEW)
 	// Output key:	Text Hashtag
 	// Ouput value: StringArrayWritable Tweets
-	public static class TweetReducer extends Reducer<Text, Text, Text, ArrayWritable> {
-//	public static class TweetReducer extends Reducer<Text, StringArrayWritable, Text, StringArrayWritable> {	// NEW
+//	public static class TweetReducer extends Reducer<Text, Text, Text, ArrayWritable> {
+	public static class TweetReducer extends Reducer<Text, ArrayWritable, Text, ArrayWritable> {	// NEW
 
-		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-//		public void reduce(Text key, Iterable<StringArrayWritable> values, Context context) throws IOException, Interrupted Exception{
+//		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+		public void reduce(Text key, Iterable<ArrayWritable> values, Context context) throws IOException, Interrupted Exception{
 
 			// NEW part
 			// listoflist[0] is tweet, listoflist[1] is location, listoflist[2] is profilepicurl
