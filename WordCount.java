@@ -17,6 +17,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 public class WordCount {
 
+	/*
 	public static class StringArrayWritable extends ArrayWritable {
 		// Constructors
 		public StringArrayWritable() {
@@ -40,22 +41,22 @@ public class WordCount {
 			// Write all texts to StringArrayWritable object
 			set(t);
 		}
-/*
-		public String
 
-		@Override
-		public String toStrings() {
-			Text [] t = to
-		}
-*/		
+//		public String
+
+//		@Override
+	//	public String toStrings() {
+	//		Text [] t = to
+	//	}
+		
 	}
-
+*/
 	//	Input Key:	Object KEY
 	//	Input Value: 	Text JSON
 	//	Output Key: 	Text Hashtag
-	//	Output Value: 	Text Tweet      OR StringArrayWritable TweetInfo (NEW)
-	public static class TweetMapper extends Mapper<Object, Text, Text, Text> {
-//	public static class TweetMapper extends Mapper<Object, Text, Text, StringArrayWritable> {	// NEW
+	//	Output Value: 	Text Tweet      OR ArrayWritable TweetInfo (NEW)
+//	public static class TweetMapper extends Mapper<Object, Text, Text, Text> {
+	public static class TweetMapper extends Mapper<Object, Text, Text, ArrayWritable> {	// NEW
 		
 		//	Create a Text variable with nothing
 		private Text word = new Text();
@@ -71,7 +72,8 @@ public class WordCount {
 		
 			// Regex Stuff
 			// Currently writing hashtag:text key-value. Want hashtag:[text,loc,screen_name,profile]
-			List<String> tweet_info = new ArrayList<String>(); 			
+			//List<String> tweet_info = new ArrayList<String>();			
+			String[] tweet_info = new String[3];
 			String hashtag = "\"hashtags\": \\[([^\\]]*)\\]";
 			String tweet = "\"text\": \"([^\"]*)\"";
 			String location = "\"location\": \"([^\"]*)\"";
@@ -91,10 +93,11 @@ public class WordCount {
 			tweet = m_text.group(1);
 			location = m_loc.group(1);
 			profile_pic = m_prof.group(1);
-			tweet_info.add(tweet); tweet_info.add(location); tweet_info.add(profile_pic);
-			//context.write(new Text(hashtag), new StringArrayWritable(tweet_info));	// NEW
+			//tweet_info.add(tweet); tweet_info.add(location); tweet_info.add(profile_pic);
+			tweet_info[0] = tweet; tweet_info[1] = location; tweet_info[2] = profile_pic;
+			context.write(new Text(hashtag), new ArrayWritable(tweet_info));	// NEW
 
-			context.write(new Text(m_hash.group(1)), new Text(m_text.group(1)));
+			//context.write(new Text(m_hash.group(1)), new Text(m_text.group(1)));
 			
 			
 			//context.write(new Text(json[0]), new Text(json[1]));
@@ -107,7 +110,7 @@ public class WordCount {
 	// Input value:	Text Tweet		OR StringArrayWritable TweetInfo (NEW)
 	// Output key:	Text Hashtag
 	// Ouput value: StringArrayWritable Tweets
-	public static class TweetReducer extends Reducer<Text, Text, Text, StringArrayWritable> {
+	public static class TweetReducer extends Reducer<Text, Text, Text, ArrayWritable> {
 //	public static class TweetReducer extends Reducer<Text, StringArrayWritable, Text, StringArrayWritable> {	// NEW
 
 		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
@@ -143,14 +146,15 @@ public class WordCount {
 			}
 			context.write(key, new StringArrayWritable(t));
 			*/
-
+			String[] placeholder = new String[1];
+			placeholder[0] = "hi";
 			Text[] t = new Text[texts.size()];
 			for (int i = 0; i < texts.size(); ++i) {
 				t[i] = new Text(texts.get(i));
 			}
 			
 			// Emit
-			context.write(key, new StringArrayWritable(t));
+			context.write(key, new ArrayWritable(placeholder));
 		}
 	}
 
@@ -166,7 +170,7 @@ public class WordCount {
 	job.setCombinerClass(TweetReducer.class);
 	job.setReducerClass(TweetReducer.class);
         job.setOutputKeyClass(Text.class);
-	job.setOutputValueClass(StringArrayWritable.class);
+	job.setOutputValueClass(ArrayWritable.class);
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
