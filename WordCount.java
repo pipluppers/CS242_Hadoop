@@ -54,11 +54,11 @@ public class WordCount {
 		// Value will be the tweet JSON
 		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 			// Extract the hashtag from value
-			String[] json = value.toString().split("\\s");
+			//String[] json = value.toString().split("\\s");
 			
 			// Regex Stuff
 			// Currently writing hashtag:text key-value. Want hashtag:[text,loc,screen_name,profile]
- 			/*
+ 			
 			String hashtag = "\"hashtags\": \\[([^\\]]*)\\]";
 			String tweet = "\"text\": \"([^\"]*)\"";
 			Pattern h = Pattern.compile(hashtag);
@@ -66,12 +66,10 @@ public class WordCount {
 			Matcher m_hash = h.matcher(value.toString());
 			Matcher m_text = t.matcher(value.toString());
 			context.write(new Text(m_hash.group(1)), new Text(m_text.group(1)));
-			*/
-
-			// Extract the tweet text from value
-			// context.write(hashtag, tweet);
 			
-			context.write(new Text(json[0]), new Text(json[1]));
+
+			
+			//context.write(new Text(json[0]), new Text(json[1]));
 
 		}
 	}
