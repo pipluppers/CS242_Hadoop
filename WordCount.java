@@ -171,7 +171,8 @@ public class WordCount {
 	job.setCombinerClass(TweetReducer.class);
 	job.setReducerClass(TweetReducer.class);
         job.setOutputKeyClass(Text.class);
-	job.setOutputValueClass(ArrayWritable.class);
+//	job.setOutputValueClass(ArrayWritable.class);
+	job.setOutputValueClass(StringArrayWritable.class);	// NEW
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
