@@ -56,11 +56,16 @@ public class WordCount {
 			// Extract the hashtag from value
 			String[] json = value.toString().split("\\s");
 			
-			/* Regex Stuff
-			String hashtag = "[hashtags]";
-			String tweet = "[text]";
+			// Regex Stuff
+			// Currently writing hashtag:text key-value. Want hashtag:[text,loc,screen_name,profile]
+ 			/*
+			String hashtag = "\"hashtags\": \\[([^\\]]*)\\]";
+			String tweet = "\"text\": \"([^\"]*)\"";
 			Pattern h = Pattern.compile(hashtag);
 			Pattern t = Pattern.compile(tweet);
+			Matcher m_hash = h.matcher(value.toString());
+			Matcher m_text = t.matcher(value.toString());
+			context.write(new Text(m_hash.group(1)), new Text(m_text.group(1)));
 			*/
 
 			// Extract the tweet text from value
