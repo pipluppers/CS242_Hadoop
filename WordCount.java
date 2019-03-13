@@ -29,42 +29,9 @@ public class WordCount {
 			}
 			set(txts);
 		}
+		//public String[] toStrings
 	}
 
-	/*
-	public static class StringArrayWritable extends ArrayWritable {
-		// Constructors
-		public StringArrayWritable() {
-			super(Text.class);
-		}
-		public StringArrayWritable(List<String> l) {
-			super(Text.class);
-			Text[] t = new Text[l.size()];
-			for (int i = 0; i < l.size(); ++i) {
-				t[i] = new Text(l.get(i));
-			}
-			set(t);
-		}
-		public StringArrayWritable(Text[] values) {
-			super(Text.class, values);
-
-			Text[] t = new Text[values.length];
-			for (int i = 0; i < values.length; ++i) {
-				t[i] = values[i];
-			}
-			// Write all texts to StringArrayWritable object
-			set(t);
-		}
-
-//		public String
-
-//		@Override
-	//	public String toStrings() {
-	//		Text [] t = to
-	//	}
-		
-	}
-*/
 	//	Input Key:	Object KEY
 	//	Input Value: 	Text JSON
 	//	Output Key: 	Text Hashtag
@@ -83,7 +50,6 @@ public class WordCount {
 		
 			// Regex Stuff
 			// Currently writing hashtag:text key-value. Want hashtag:[text,loc,screen_name,profile]
-			//List<String> tweet_info = new ArrayList<String>();			
 			String[] tweet_info = new String[3];
 			String hashtag = "\"hashtags\": \\[([^\\]]*)\\]";
 			String tweet = "\"text\": \"([^\"]*)\"";
@@ -104,8 +70,22 @@ public class WordCount {
 			while(m_text.find()) tweet = m_text.group(1);
 			while(m_loc.find()) location = m_loc.group(1);
 			while(m_prof.find()) profile_pic = m_prof.group(1);
-			tweet_info[0] = tweet; tweet_info[1] = location; tweet_info[2] = profile_pic;
-			context.write(new Text(hashtag), new StringArrayWritable(tweet_info));	// NEW
+
+			// All the words in the tweet
+			String[] words = tweet.split("\\s");
+
+			//tweet_info[0] = tweet; 
+			tweet_info[1] = location; 
+			tweet_info[2] = profile_pic;
+			tweet_info[0] = hashtag;
+			//context.write(new Text("Hello"), new StringArrayWritable(tweet_info));
+//			context.write(new Text(hashtag), new StringArrayWritable(tweet_info));	// NEW
+			//context.write(new Text(tweet), new StringArrayWritable(tweet_info));
+
+			for (String word : words) {
+				context.write(new Text(word), new StringArrayWritable(tweet_info));
+			}
+
 		}
 	}
 
