@@ -70,7 +70,7 @@ public class WordCount {
 	//	Output Key: 	Text Hashtag
 	//	Output Value: 	Text Tweet      OR ArrayWritable TweetInfo (NEW)
 //	public static class TweetMapper extends Mapper<Object, Text, Text, Text> {
-	public static class TweetMapper extends Mapper<Object, Text, Text, ArrayWritable> {	// NEW
+	public static class TweetMapper extends Mapper<Object, Text, Text, StringArrayWritable> {	// NEW
 		
 		// Value will be the tweet JSON
 		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
@@ -105,7 +105,7 @@ public class WordCount {
 			while(m_loc.find()) location = m_loc.group(1);
 			while(m_prof.find()) profile_pic = m_prof.group(1);
 			tweet_info[0] = tweet; tweet_info[1] = location; tweet_info[2] = profile_pic;
-			context.write(new Text(hashtag), new ArrayWritable(tweet_info));	// NEW
+			context.write(new Text(hashtag), new StringArrayWritable(tweet_info));	// NEW
 		}
 	}
 
