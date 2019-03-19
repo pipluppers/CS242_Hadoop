@@ -29,7 +29,10 @@ public class WordCount {
 			}
 			set(txts);
 		}
-		//public String[] toStrings
+		public String[] toString() {
+			String[] new_str = new String[this.length];
+		}
+		
 	}
 
 	//	Input Key:	Object KEY
@@ -37,55 +40,71 @@ public class WordCount {
 	//	Output Key: 	Text Hashtag
 	//	Output Value: 	Text Tweet      OR ArrayWritable TweetInfo (NEW)
 //	public static class TweetMapper extends Mapper<Object, Text, Text, Text> {
-	public static class TweetMapper extends Mapper<Object, Text, Text, StringArrayWritable> {	// NEW
+	public static class TweetMapper extends Mapper<Object, Text, Text, Text> {	// NEW
 		
 		// Value will be the tweet JSON
 		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-			// Extract the hashtag from value
-			//String[] json = value.toString().split("\\s");
-	
 			// TODO
-			// File is in the format [{TWEET},{TWEET},...]
+			// File is in the format [{TWEET},\n{TWEET},...]
 			// How to separate all of these
 		
 			// Regex Stuff
-			// Currently writing hashtag:text key-value. Want hashtag:[text,loc,screen_name,profile]
-			String[] tweet_info = new String[3];
-			String hashtag = "\"hashtags\": \\[([^\\]]*)\\]";
-			String tweet = "\"text\": \"([^\"]*)\"";
-			String location = "\"location\": \"([^\"]*)\"";
-			String profile_pic = "\"profile_image_url\": \"([^\"]*)\"";
+			String tweet = "";	// Should be our output value
+			String tweetjson, user, content, name, screenname, location;
+			content = name = screenname = location = "";
+			Pattern p_tweetjsons = Pattern.compile("\\{(.*?\"lang\": \".*?(?=\")\"\\})"); //{ANYTHNIG, "lang": "any"}
+			Matcher m_tweetjsons = p_tweetjsons.matcher(value.toString());
+			Pattern p_hashtags = Pattern.compile("\"hashtags\": \\[(.*?(?=\\],))\\],");
+			Matcher m_hashtags = p_hashtags.matcher(value.toString());
+			Pattern p_content = Pattern.compile(", \"text\": \"(.*?(?=\", \"truncated\"))");
+			Matcher m_content;
+			Pattern p_user_info = Pattern.compile("\"user\": \\{(.*?\"translator_type\": \".*?(?=\")\")");
+			Matcher m_user_info;
+			Pattern p_name = Pattern.compile("\"name\": \"(.*?(?=\",))\",");
+			Matcher m_name;
+			Pattern p_screen_name = Pattern.compile("\"screen_name\": \"(.*?(?=\", \"l))\",");
+			Matcher m_screen_name;
+			Pattern p_location = Pattern.compile("\"location\": \"(.*?(?=\", \"d))\",");
+			Matcher m_location;
+			while(m_tweetjsons.find()) {
+				tweetjson = m_tweetjsons.group(1);
+				m_content = p_content.matcher(tweetjson);
+				while(m_content.find()) {
+					if (content.length() == 0) content = m_content.group(1);
+					else content += ", " + m_content.group(1);
+				}
+				m_hashtags = p_hashtags.matcher(tweetjson);
+				while(m_hashtags.find()) {
+					if (hashtags.length() == 0) hashtags = m_hashtags.group(1);
+					else hashtags += ", " + m_hashtags.group(1);
+				}
+				m_user_info = p_user_info.matcher(tweetjson);
+				while(m_user_info.find()) {
+					user = m_user_info.group(1);
 
-			Pattern h = Pattern.compile(hashtag);
-			Pattern t = Pattern.compile(tweet);
-			Pattern loc = Pattern.compile(location);
-			Pattern prof = Pattern.compile(profile_pic);
-
-			Matcher m_hash = h.matcher(value.toString());
-			Matcher m_text = t.matcher(value.toString());
-			Matcher m_loc = loc.matcher(value.toString());
-			Matcher m_prof = prof.matcher(value.toString());
-			
-			while(m_hash.find()) hashtag = m_hash.group(1);
-			while(m_text.find()) tweet = m_text.group(1);
-			while(m_loc.find()) location = m_loc.group(1);
-			while(m_prof.find()) profile_pic = m_prof.group(1);
-
-			// All the words in the tweet
-			String[] words = tweet.split("\\s");
-
-			//tweet_info[0] = tweet; 
-			tweet_info[1] = location; 
-			tweet_info[2] = profile_pic;
-			tweet_info[0] = hashtag;
-			//context.write(new Text("Hello"), new StringArrayWritable(tweet_info));
-//			context.write(new Text(hashtag), new StringArrayWritable(tweet_info));	// NEW
-			//context.write(new Text(tweet), new StringArrayWritable(tweet_info));
-
-			for (String word : words) {
-				context.write(new Text(word), new StringArrayWritable(tweet_info));
+					m_name = p_name.matcher(user);
+					while (m_name.find()) {
+						if (name.length() == 0) name = m_name.group(1);
+						else name += ", " + m_name.group(0);
+					}
+					m_screen_name = p_screen_name.matcher(user);
+					while (m_screen_name.find()) {
+						if (screenname.length() == 0) screenname = m_screen_name.group(1);
+						else screenname += ", " + m_screen_name.group(1);
+					}
+					m_location = p_location.matcher(user);
+					while (m_location.find()) {
+						if (location.length() == 0) location = m_location.group(1);
+						else location += m_location.group(1);
+					}
+				}
+				// output value: [1, [name], [screenname], [hashtags], [content], [location]]
+				tweet = "[1, ["+name+"], [" + screenname + "], [" + hashtags + "], [" + content + "], [" + location + "]]";
+				Text tweety = new Text(tweet);
+				for (String word:content) {
+					context.write(new Text(word), tweety);
+				}
 			}
-
 		}
 	}
 
@@ -94,48 +113,30 @@ public class WordCount {
 	// Input value:	Text Tweet		OR StringArrayWritable TweetInfo (NEW)
 	// Output key:	Text Hashtag
 	// Ouput value: StringArrayWritable Tweets
-//	public static class TweetReducer extends Reducer<Text, Text, Text, ArrayWritable> {
-//	public static class TweetReducer extends Reducer<Text, ArrayWritable, Text, ArrayWritable> {	// NEW
-	public static class TweetReducer extends Reducer<Text, StringArrayWritable, Text, StringArrayWritable> {	// NEW2
+/public static class TweetReducer extends Reducer<Text, Text, Text, ArrayWritable> {
+//	public static class TweetReducer extends Reducer<Text, StringArrayWritable, Text, StringArrayWritable> {	// NEW2
 
-		public void reduce(Text key, Iterable<StringArrayWritable> values, Context context) throws IOException, InterruptedException {
-//		public void reduce(Text key, Iterable<ArrayWritable> values, Context context) throws IOException, InterruptedException{
+		public void reduce(Text key, Iterable<Text>values, Context context) throws IOException, InterruptedException {
+//		public void reduce(Text key, Iterable<StringArrayWritable> values, Context context) throws IOException, InterruptedException{
 
-			// NEW part
-			// listoflist[0] is tweet, listoflist[1] is location, listoflist[2] is profilepicurl
-			/*
- 			ArrayList<ArrayList<String>> listoflist = new ArrayList<ArrayList<String>>(3);
-			ArrayList<String> innerStr = new ArrayList<String>(3);
-  			*/
-
-			String[] str = new String[3];
-			String[] res = new String[3];
-			res[0] = ""; res[1] = ""; res[2] = "";
-/*
-			for (Text val : values) {
-				texts.add(val.toString());
+	
+			Pattern p_digit = Pattern.compile("\\[(\\d+)(.*)");
+			Matcher m_digit;
+			int num;
+			String rest;
+			for (Text val:values) {
+				m_digit = p_digit.matcher(val.toString());
+				while(m_digit.find()) {
+					num = Integer.parseInt(m_digit.group(1));
+				}
+				++num;
+				// TODO Oh crap. Have to add all tweet jsons to a list.....
 			}
-*/
-//			for (ArrayWritable val : values) {
-			for (StringArrayWritable val:values) {
-				str = val.toStrings();
-				res[0] = res[0] + str[0]; res[1] = res[1] + str[1]; res[2] = res[2] + str[2];
-			}
+			String new_val = 			
+
 		
 //			context.write(key, new ArrayWritable(res));
 			context.write(key, new StringArrayWritable(res));
-
-/*
-			String[] placeholder = new String[1];
-			placeholder[0] = "hi";
-			Text[] t = new Text[texts.size()];
-			for (int i = 0; i < texts.size(); ++i) {
-				t[i] = new Text(texts.get(i));
-			}
-			
-			// Emit
-			context.write(key, new ArrayWritable(placeholder));
-*/
 		}
 	}
 
@@ -151,7 +152,6 @@ public class WordCount {
 	job.setCombinerClass(TweetReducer.class);
 	job.setReducerClass(TweetReducer.class);
         job.setOutputKeyClass(Text.class);
-//	job.setOutputValueClass(ArrayWritable.class);
 	job.setOutputValueClass(StringArrayWritable.class);	// NEW
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
